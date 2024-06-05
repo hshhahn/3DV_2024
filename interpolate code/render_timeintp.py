@@ -40,7 +40,7 @@ def render_set(model_path, load2gpu_on_the_fly, is_6dof, name, iteration, views,
     to8b = lambda x: (255 * np.clip(x, 0, 1)).astype(np.uint8)
 
     views = sorted(views, key=lambda x: x.fid)
-    trainscale = 4 # 학습할 때 몇 배 줄여서 학습했는지
+    trainscale = 5 # 학습할 때 몇 배 줄여서 학습했는지
 
     if name != "train":
         return

@@ -27,9 +27,9 @@ import time
 
 
 def render_set(model_path, load2gpu_on_the_fly, is_6dof, name, iteration, views, gaussians, pipeline, background, deform):
-    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
-    gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
-    depth_path = os.path.join(model_path, name, "ours_{}".format(iteration), "depth")
+    render_path = os.path.join(model_path, name, "ours_{}_gaussianintp".format(iteration), "renders")
+    gts_path = os.path.join(model_path, name, "ours_{}_gaussianintp".format(iteration), "gt")
+    depth_path = os.path.join(model_path, name, "ours_{}_gaussianintp".format(iteration), "depth")
 
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
@@ -40,7 +40,7 @@ def render_set(model_path, load2gpu_on_the_fly, is_6dof, name, iteration, views,
     to8b = lambda x: (255 * np.clip(x, 0, 1)).astype(np.uint8)
 
     views = sorted(views, key=lambda x: x.fid)
-    trainscale = 4 # 학습할 때 몇 배 줄여서 학습했는지
+    trainscale = 5 # 학습할 때 몇 배 줄여서 학습했는지
 
     if name != "train":
         return
@@ -64,11 +64,14 @@ def render_set(model_path, load2gpu_on_the_fly, is_6dof, name, iteration, views,
         time_input = fid_p.unsqueeze(0).expand(xyz.shape[0], -1)
         d_xyz_p, d_rotation_p, d_scaling_p = deform.step(xyz.detach(), time_input)
 
+        # fidd = (fid_n * (trainscale-r) + fid_p * r) / trainscale
+        # print(fid-fidd)
+
         d_xyz = (d_xyz_n * (trainscale-r) + d_xyz_p * r) / trainscale
         d_rotation = (d_rotation_n * (trainscale-r) + d_rotation_p * r) / trainscale
         d_scaling = (d_scaling_n * (trainscale-r) + d_scaling_p * r) / trainscale
 
-        d_xyz, d_rotation, d_scaling = deform.step(xyz.detach(), time_input)
+        # d_xyz, d_rotation, d_scaling = deform.step(xyz.detach(), time_input)
         results = render(view, gaussians, pipeline, background, d_xyz, d_rotation, d_scaling, is_6dof)
         rendering = results["render"]
         renderings.append(to8b(rendering.cpu().numpy()))
